@@ -167,6 +167,15 @@ function renderResults(data) {
         html += '</div></div>';
     }
 
+    // -- Awards --
+    if (ei.awards && ei.awards.length > 0) {
+        html += '<div class="section">';
+        html += '<div class="section-title">奖项与证书</div>';
+        html += '<div class="skills-list">';
+        ei.awards.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        html += '</div></div>';
+    }
+
     // -- Work Experience --
     if (ei.work_experience && ei.work_experience.length > 0) {
         html += '<div class="section">';

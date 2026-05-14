@@ -100,6 +100,7 @@ EXTRACTION_SYSTEM_PROMPT = """你是一个专业的简历信息提取专家。�
     "graduation_date": "毕业时间"
   },
   "skills": ["技术或职业技能列表"],
+  "awards": ["奖项荣誉或证书列表（如CET4、普通话二甲、计算机一级等），没有则为空数组"],
   "work_experience": [
     {
       "company": "公司/机构名称",
@@ -215,6 +216,7 @@ def _extract_from_llm(text: str) -> dict:
             "graduation_date": education.get("graduation_date"),
         },
         "skills": raw.get("skills") or [],
+        "awards": raw.get("awards") or [],
         "work_experience": [
             {
                 "company": (w or {}).get("company"),
