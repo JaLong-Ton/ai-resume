@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能简历分析系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <h1>AI 智能简历分析系统</h1>
+            </div>
+            <p class="subtitle">上传简历 PDF，AI 自动提取关键信息并智能匹配岗位需求</p>
+        </header>
+
+        <!-- Upload Card -->
+        <div class="card" id="uploadCard">
+            <div class="card-header">
+                <span class="card-title">简历上传与分析</span>
+            </div>
+            <div class="card-body">
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label class="form-label">上传简历文件（PDF）</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <div class="upload-text">
+                            拖拽 PDF 文件到此处，或 <strong>点击选择文件</strong>
+                        </div>
+                        <div class="file-info" id="fileInfo">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <span id="fileName"></span>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                    <p class="form-hint">仅支持 PDF 格式，最大 10MB</p>
+                </div>
+
+                <!-- Job Description -->
+                <div class="form-group">
+                    <label class="form-label" for="jobDesc">岗位描述（可选）</label>
+                    <textarea
+                        id="jobDesc"
+                        rows="4"
+                        placeholder="粘贴岗位描述文本，系统将自动计算匹配度评分。&#10;&#10;例如：负责后端业务系统的设计与开发，使用Java、SpringBoot等主流框架..."
+                    ></textarea>
+                    <p class="form-hint">填写后将在结果中展示匹配度评分和详细分析</p>
+                </div>
+
+                <!-- Submit -->
+                <button class="btn btn-primary btn-lg btn-block" id="analyzeBtn" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    开始分析
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div class="card hidden" id="resultsCard">
+            <div class="card-header">
+                <span class="card-title">分析结果</span>
+                <span class="badge badge-success" id="timeBadge"></span>
+            </div>
+            <div class="card-body" id="resultsBody">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            Powered by DeepSeek AI &middot; FastAPI &middot; Alibaba Cloud FC
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">AI 正在分析简历...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
