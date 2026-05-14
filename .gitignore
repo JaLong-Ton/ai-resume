@@ -1,14 +1,66 @@
+# Backend config
 backend/.env
 backend/s.yaml
 backend/python/
+
+# Temporary / test files
+backend/event_handler.py
+backend/test_handler.py
+backend/bootstrap
+backend/Dockerfile
+backend/deploy/
+
+# Pip installed deps (copied to root during testing)
+anyio/
+annotated_types/
+blinker/
+certifi/
+click/
+colorama/
+distro/
+flask/
+h11/
+httpcore/
+httpx/
+idna/
+itsdangerous/
+jinja2/
+jiter/
+markupsafe/
+openai/
+pydantic/
+pydantic_core/
+pymupdf/
+sniffio/
+tqdm/
+typing_extensions/
+typing_inspection/
+werkzeug/
+fitz/
+bin/
+*.exe
+*.whl
+
+# Playwright / testing
+.playwright-mcp/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
+*.egg-info/
+
+# Coverage / reports
 htmlcov/
 dist/
 build/
-*.egg-info/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# IDE / system
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
