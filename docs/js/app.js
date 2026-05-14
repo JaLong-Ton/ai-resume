@@ -167,6 +167,21 @@ function renderResults(data) {
         html += '</div></div>';
     }
 
+    // -- Work Experience --
+    if (ei.work_experience && ei.work_experience.length > 0) {
+        html += '<div class="section">';
+        html += '<div class="section-title">工作经历</div>';
+        ei.work_experience.forEach(w => {
+            const dates = [w.start_date, w.end_date].filter(Boolean).join(' - ');
+            html += '<div class="project-item">';
+            html += `<div class="project-name">${escapeHtml(w.company || '')}</div>`;
+            html += `<div class="project-role">${escapeHtml(w.position || '')}${dates ? ' &middot; ' + escapeHtml(dates) : ''}</div>`;
+            if (w.responsibilities) html += `<div class="project-desc">${escapeHtml(w.responsibilities)}</div>`;
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
     // -- Projects --
     if (ei.project_experience && ei.project_experience.length > 0) {
         html += '<div class="section">';

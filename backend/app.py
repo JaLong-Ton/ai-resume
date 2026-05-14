@@ -100,6 +100,15 @@ EXTRACTION_SYSTEM_PROMPT = """你是一个专业的简历信息提取专家。�
     "graduation_date": "毕业时间"
   },
   "skills": ["技术或职业技能列表"],
+  "work_experience": [
+    {
+      "company": "公司/机构名称",
+      "position": "职位",
+      "start_date": "开始时间",
+      "end_date": "结束时间",
+      "responsibilities": "主要职责（1-2句话）"
+    }
+  ],
   "project_experience": [
     {
       "name": "项目名称",
@@ -116,7 +125,8 @@ EXTRACTION_SYSTEM_PROMPT = """你是一个专业的简历信息提取专家。�
 3. 电话号码只保留数字部分
 4. 地址信息提取到城市/地区级别即可
 5. 工作年限根据简历中的工作经历时间跨度推算
-6. 项目经验最多提取5个最重要的"""
+6. 工作经历和项目经验各最多提取5个最重要的
+7. work_experience 用于公司/实习/全职工作经历，project_experience 用于具体项目"""
 
 MATCHING_SYSTEM_PROMPT = """你是一个专业的简历匹配分析专家。根据候选人信息和岗位描述，计算匹配度评分并给出详细分析。
 
@@ -205,6 +215,16 @@ def _extract_from_llm(text: str) -> dict:
             "graduation_date": education.get("graduation_date"),
         },
         "skills": raw.get("skills") or [],
+        "work_experience": [
+            {
+                "company": (w or {}).get("company"),
+                "position": (w or {}).get("position"),
+                "start_date": (w or {}).get("start_date"),
+                "end_date": (w or {}).get("end_date"),
+                "responsibilities": (w or {}).get("responsibilities"),
+            }
+            for w in raw.get("work_experience") or []
+        ],
         "project_experience": [
             {
                 "name": (p or {}).get("name"),
