@@ -26,16 +26,16 @@
 │                       │                            │
 │         ┌─────────────┼─────────────┐             │
 │         ▼             ▼             ▼             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
-│  │ PyMuPDF  │  │  httpx   │  │  Flask   │       │
-│  │ PDF 解析  │  │ LLM 调用  │  │ Web 框架  │       │
-│  └──────────┘  └────┬─────┘  └──────────┘       │
-└──────────────────────┼───────────────────────────┘
-                       │
-              ┌────────▼────────┐
-              │  DeepSeek API    │
-              │ deepseek-v4-flash│
-              └─────────────────┘
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
+│  │ PyMuPDF  │  │  httpx   │  │  Flask   │  │  Redis   │ │
+│  │ PDF 解析  │  │ LLM 调用  │  │ Web 框架  │  │  缓存    │ │
+│  └──────────┘  └────┬─────┘  └──────────┘  └────┬─────┘ │
+└──────────────────────┼───────────────────────────────────┘
+                       │                    │
+              ┌────────▼────────┐  ┌────────▼────────┐
+              │  DeepSeek API    │  │  Upstash Redis   │
+              │ deepseek-v4-pro  │  │  免费套餐         │
+              └─────────────────┘  └─────────────────┘
 ```
 
 ## 技术选型
@@ -44,9 +44,10 @@
 |------|------|------|
 | **后端框架** | Flask 3.x | WSGI 原生兼容 FC Python runtime |
 | **PDF 解析** | PyMuPDF 1.27 | 支持多页 PDF，中文编码 |
-| **AI 模型** | DeepSeek V4 (Flash/Pro) | OpenAI 兼容 API，中文语义理解强 |
-| **HTTP 客户端** | httpx | 轻量替代 openai SDK，无 pydantic 依赖 |
-| **部署平台** | 阿里云函数计算 FC | Serverless，按量付费 |
+| **AI 模型** | DeepSeek V4 Pro | 推理模型，中文语义理解精准 |
+| **HTTP 客户端** | httpx | 轻量替代 openai SDK |
+| **缓存** | Upstash Redis | 免费套餐，命中 <100ms |
+| **后端部署** | 阿里云函数计算 FC (python3.10) | Serverless，按量付费 |
 | **前端** | HTML + CSS + JS | 零框架，拖拽上传，响应式 |
 | **前端部署** | GitHub Pages | 免费静态托管 |
 
@@ -95,9 +96,14 @@ curl -X POST -F "file=@简历.pdf" \
         "graduation_date": "2020-06"
       },
       "skills": ["Java", "SpringBoot", "MySQL", "Redis"],
+      "awards": ["CET6证书", "计算机二级"],
+      "work_experience": [
+        {"company": "某科技公司", "position": "高级工程师", "start_date": "2020-06", "end_date": "至今", "responsibilities": "..."}
+      ],
       "project_experience": [...]
     },
-    "processing_time_ms": 11494
+    "from_cache": false,
+    "processing_time_ms": 12000
   }
 }
 ```
@@ -126,7 +132,9 @@ curl -X POST \
     "overall_feedback": "候选人Java后端经验丰富，技能高度匹配...",
     "strengths": ["熟练掌握SpringBoot框架", "..."],
     "weaknesses": ["微服务架构经验不足"]
-  }
+  },
+  "from_cache": false,
+  "processing_time_ms": 16500
 }
 ```
 
@@ -137,8 +145,9 @@ ai-resume/
 ├── backend/
 │   ├── app.py              # Flask 应用（PDF解析 + LLM提取 + 匹配评分）
 │   ├── mini.py             # FC 事件→WSGI 适配器（含冷启动自动 pip install）
-│   ├── requirements.txt    # flask, pymupdf, httpx
+│   ├── requirements.txt    # flask, pymupdf, httpx, redis
 │   └── .env.example
+│   └── s.yaml              # Serverless Devs 部署配置
 ├── docs/                   # GitHub Pages 前端
 │   ├── index.html
 │   ├── css/style.css
@@ -184,7 +193,7 @@ s config add
 s deploy -y
 ```
 
-首次冷启动约 30 秒（自动 pip install），后续请求 3-5 秒。
+首次冷启动约 30 秒（自动 pip install），后续热请求 8-12 秒（两次 LLM 调用），缓存命中 <100ms。
 
 ### 前端 — GitHub Pages
 
@@ -196,7 +205,8 @@ s deploy -y
 |------|------|--------|
 | `DEEPSEEK_API_KEY` | DeepSeek API 密钥 | (必填) |
 | `DEEPSEEK_BASE_URL` | API 地址 | `https://api.deepseek.com` |
-| `DEEPSEEK_MODEL` | 模型名称 | `deepseek-v4-flash` |
+| `DEEPSEEK_MODEL` | 模型名称 | `deepseek-v4-pro` |
+| `REDIS_URL` | Redis 连接地址 | (可选，不设则跳过缓存) |
 
 ## 前端使用说明
 
