@@ -18,7 +18,7 @@ def _install_deps():
         return
     result = subprocess.run([
         sys.executable, "-m", "pip", "install",
-        "flask", "pymupdf", "httpx",
+        "flask", "pymupdf", "httpx", "redis",
         "-i", "https://mirrors.aliyun.com/pypi/simple/",
     ], capture_output=True, text=True)
     if result.returncode != 0:

@@ -120,7 +120,13 @@ function renderResults(data) {
     const ei = extracted_info;
 
     // Processing time badge
-    $timeBadge.textContent = `耗时 ${(processing_time_ms / 1000).toFixed(1)}s`;
+    const cacheLabel = data.from_cache ? ' · 缓存命中' : '';
+    $timeBadge.textContent = `耗时 ${(processing_time_ms / 1000).toFixed(1)}s${cacheLabel}`;
+    if (data.from_cache) {
+        $timeBadge.className = 'badge badge-success';
+    } else {
+        $timeBadge.className = 'badge badge-primary';
+    }
 
     // Match score class
     let scoreClass = 'match-low';

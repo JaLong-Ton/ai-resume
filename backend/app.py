@@ -7,6 +7,7 @@ job-description match scores. Designed for Alibaba Cloud FC Python runtime.
 Replaced FastAPI with Flask for native WSGI support on FC.
 """
 
+import hashlib
 import httpx
 import json
 import os
@@ -27,6 +28,52 @@ DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 LLM_TIMEOUT = 60  # seconds
 LLM_MAX_RETRIES = 3
+REDIS_URL = os.getenv("REDIS_URL", "")
+CACHE_TTL = 3600  # 1 hour
+
+# ---------------------------------------------------------------------------
+# Redis cache
+# ---------------------------------------------------------------------------
+
+_redis = None
+
+
+def _get_redis():
+    global _redis
+    if _redis is None and REDIS_URL:
+        import redis
+        _redis = redis.from_url(REDIS_URL, socket_connect_timeout=5, socket_timeout=5)
+    return _redis
+
+
+def _cache_key(file_bytes: bytes, job_desc: str = "") -> str:
+    content = file_bytes + b"|" + job_desc.encode("utf-8")
+    return "resume:" + hashlib.sha256(content).hexdigest()[:32]
+
+
+def _cache_get(file_bytes: bytes, job_desc: str = "") -> dict | None:
+    r = _get_redis()
+    if r is None:
+        return None
+    try:
+        key = _cache_key(file_bytes, job_desc)
+        data = r.get(key)
+        if data:
+            return json.loads(data)
+    except Exception:
+        pass
+    return None
+
+
+def _cache_set(file_bytes: bytes, job_desc: str, result: dict) -> None:
+    r = _get_redis()
+    if r is None:
+        return
+    try:
+        key = _cache_key(file_bytes, job_desc)
+        r.setex(key, CACHE_TTL, json.dumps(result, ensure_ascii=False))
+    except Exception:
+        pass
 
 # ---------------------------------------------------------------------------
 # Flask application
@@ -290,7 +337,20 @@ def upload_resume():
     except ValueError as e:
         return jsonify({"success": False, "error": {"message": str(e)}}), 400
 
+    # Check cache
     t0 = time.time()
+    cached = _cache_get(file_bytes)
+    if cached:
+        return jsonify({
+            "success": True,
+            "data": {
+                "file_name": filename,
+                **cached,
+                "from_cache": True,
+                "processing_time_ms": int((time.time() - t0) * 1000),
+            },
+        })
+
     raw_text = extract_pdf_text(file_bytes)
     if not raw_text.strip():
         return jsonify({"success": False, "error": {"message": "No text extracted from PDF"}}), 400
@@ -302,12 +362,19 @@ def upload_resume():
     except Exception as e:
         return jsonify({"success": False, "error": {"message": f"LLM extraction failed: {e}"}}), 502
 
+    result = {
+        "parsed_text": cleaned[:5000],
+        "extracted_info": extracted,
+        "matching": None,
+    }
+    _cache_set(file_bytes, "", result)
+
     return jsonify({
         "success": True,
         "data": {
             "file_name": filename,
-            "parsed_text": cleaned[:5000],
-            "extracted_info": extracted,
+            **result,
+            "from_cache": False,
             "processing_time_ms": int((time.time() - t0) * 1000),
         },
     })
@@ -325,6 +392,21 @@ def analyze_resume():
         return jsonify({"success": False, "error": {"message": str(e)}}), 400
 
     t0 = time.time()
+    job_description = request.form.get("job_description", "").strip()
+
+    # Check cache (key includes job description so different JDs don't collide)
+    cached = _cache_get(file_bytes, job_description)
+    if cached:
+        return jsonify({
+            "success": True,
+            "data": {
+                "file_name": filename,
+                **cached,
+                "from_cache": True,
+                "processing_time_ms": int((time.time() - t0) * 1000),
+            },
+        })
+
     raw_text = extract_pdf_text(file_bytes)
     if not raw_text.strip():
         return jsonify({"success": False, "error": {"message": "No text extracted from PDF"}}), 400
@@ -337,20 +419,25 @@ def analyze_resume():
         return jsonify({"success": False, "error": {"message": f"LLM extraction failed: {e}"}}), 502
 
     matching = None
-    job_description = request.form.get("job_description", "").strip()
     if job_description:
         try:
             matching = _match_from_llm(extracted, job_description)
         except Exception as e:
             return jsonify({"success": False, "error": {"message": f"LLM matching failed: {e}"}}), 502
 
+    result = {
+        "parsed_text": cleaned[:5000],
+        "extracted_info": extracted,
+        "matching": matching,
+    }
+    _cache_set(file_bytes, job_description, result)
+
     return jsonify({
         "success": True,
         "data": {
             "file_name": filename,
-            "parsed_text": cleaned[:5000],
-            "extracted_info": extracted,
-            "matching": matching,
+            **result,
+            "from_cache": False,
             "processing_time_ms": int((time.time() - t0) * 1000),
         },
     })
