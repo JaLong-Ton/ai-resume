@@ -1,40 +1,40 @@
 # AI 智能简历分析系统
 
-基于 DeepSeek AI 的简历智能解析与岗位匹配系统。上传 PDF 简历，自动提取关键信息并计算与岗位需求的匹配度评分。
+基于 DeepSeek v4 flash 的简历智能解析与岗位匹配系统。上传 PDF 简历，自动提取关键信息并计算与岗位需求的匹配度评分。
 
 ## 系统架构
 
 ```
 ┌──────────────────────────────────────────────────┐
-│                    用户/浏览器                      │
-│            https://jalong-ton.github.io           │
+│                    用户/浏览器                    │
+│            https://jalong-ton.github.io          │
 └──────────────────────┬───────────────────────────┘
                        │ HTTPS
 ┌──────────────────────▼───────────────────────────┐
-│              GitHub Pages (docs/)                  │
-│              index.html + CSS + JS                │
+│              GitHub Pages (docs/)                │
+│              index.html + CSS + JS               │
 └──────────────────────┬───────────────────────────┘
                        │ API 调用
 ┌──────────────────────▼───────────────────────────┐
-│      阿里云函数计算 FC (python3.10)                 │
-│    https://resume-analyzer-xxx.fcapp.run          │
-│                                                    │
-│  ┌──────────────────────────────────────────────┐ │
-│  │  mini.py — FC 事件适配器 (HTTP → WSGI)       │ │
-│  │  app.py  — Flask 应用 + 业务逻辑              │ │
-│  └──────────────────────────────────────────────┘ │
-│                       │                            │
-│         ┌─────────────┼─────────────┐             │
-│         ▼             ▼             ▼             │
+│      阿里云函数计算 FC (python3.10)               │
+│    https://resume-analyzer-xxx.fcapp.run         │
+│                                                  │
+│  ┌──────────────────────────────────────────────┐│
+│  │  mini.py — FC 事件适配器 (HTTP → WSGI)        ││
+│  │  app.py  — Flask 应用 + 业务逻辑              ││
+│  └──────────────────────────────────────────────┘│
+│                       │                          │
+│         ┌─────────────┼─────────────┐            │
+│         ▼             ▼             ▼            │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
 │  │ PyMuPDF  │  │  httpx   │  │  Flask   │  │  Redis   │ │
-│  │ PDF 解析  │  │ LLM 调用  │  │ Web 框架  │  │  缓存    │ │
+│  │ PDF 解析 │  │ LLM 调用  │  │ Web 框架 │  │  缓存    │ │
 │  └──────────┘  └────┬─────┘  └──────────┘  └────┬─────┘ │
 └──────────────────────┼───────────────────────────────────┘
                        │                    │
               ┌────────▼────────┐  ┌────────▼────────┐
-              │  DeepSeek API    │  │  Upstash Redis   │
-              │ deepseek-v4-pro  │  │  免费套餐         │
+              │  DeepSeek API   │  │  Upstash Redis  │
+              │ deepseek-v4-pro │  │                 │
               └─────────────────┘  └─────────────────┘
 ```
 
@@ -44,7 +44,7 @@
 |------|------|------|
 | **后端框架** | Flask 3.x | WSGI 原生兼容 FC Python runtime |
 | **PDF 解析** | PyMuPDF 1.27 | 支持多页 PDF，中文编码 |
-| **AI 模型** | DeepSeek V4 Pro | 推理模型，中文语义理解精准 |
+| **AI 模型** | DeepSeek V4 flash | 推理模型，中文语义理解精准 |
 | **HTTP 客户端** | httpx | 轻量替代 openai SDK |
 | **缓存** | Upstash Redis | 免费套餐，命中 <100ms |
 | **后端部署** | 阿里云函数计算 FC (python3.10) | Serverless，按量付费 |
@@ -148,7 +148,7 @@ ai-resume/
 │   ├── requirements.txt    # flask, pymupdf, httpx, redis
 │   └── .env.example
 │   └── s.yaml              # Serverless Devs 部署配置
-├── docs/                   # GitHub Pages 前端
+├── docs/                   # 前端
 │   ├── index.html
 │   ├── css/style.css
 │   └── js/app.js
@@ -197,7 +197,6 @@ s deploy -y
 
 ### 前端 — GitHub Pages
 
-推送代码到 `main` 分支，在仓库 Settings → Pages 中选择 `main` 分支的 `/docs` 目录即可。
 
 ### 环境变量
 
